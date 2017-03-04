@@ -578,7 +578,7 @@ module AlexHall
                 if old_model_dict and old_model_dict["grid_id"]
                     model_dict["grid_id"] = old_model_dict["grid_id"]
 
-                    model.entities.each { |ent|
+                    model.active_entities.each { |ent|
                         if ent.is_a? Sketchup::Group and ent.attribute_dictionaries
                             old_grid_dict = ent.attribute_dictionaries["grid_properties"]
                             if old_grid_dict and old_grid_dict["nodes"]

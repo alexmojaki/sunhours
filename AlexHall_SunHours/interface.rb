@@ -47,7 +47,7 @@ module AlexHall
         submenu.add_item("Select all grids") {
             Sketchup.send_action "selectSelectionTool:"
             model = Sketchup.active_model
-            entities = model.entities
+            entities = model.active_entities
             selection = model.selection
             selection.clear
             entities.each { |ent|
@@ -79,7 +79,7 @@ module AlexHall
 
         def SunHours.warnOldGrid(fix)
             model = Sketchup.active_model
-            entities = model.entities
+            entities = model.active_entities
             message = "You have selected a grid for which this function is not available. This is probably because the grid was created in an older version of SunHours. "
             message += fix + "\nMeanwhile, would you like to delete all grids created in the old version?"
             result = UI.messagebox(message, MB_YESNO)
@@ -141,7 +141,7 @@ module AlexHall
                             oldGrids = true
                             break
                         end
-                        model.entities.each{ |ent|
+                        model.active_entities.each{ |ent|
                             dics = ent.attribute_dictionaries
                             if dics
                                 dic = dics["grid_fit_properties"]
