@@ -96,19 +96,9 @@ module AlexHall
         def SunHours.fit_grid_params(facesToFit, model, entities, params, is_surface)
 
             stamp = [Time.now, rand]
-            facesToFit.each{ |f| f.set_attribute("grid_fit_properties", "stamp", stamp) }	
+            facesToFit.each{ |f| f.set_attribute("grid_fit_properties", "stamp", stamp) }
 
-            #### Making a copy of the faces (that is offset if appropriate) being fitted as a group
-
-            offsetDist = params[5].m
-            offsetDist = 0.01.m if offsetDist==0
-
-            # Create an array of groups called 'groups', where each group is actually a single face (this helps to avoid intersection problems)
-            groupsOriginal = facesToFit.collect{ |f| entities.add_group([f]) }
-            groups = groupsOriginal.collect{ |g| g.copy }
-            groupsOriginal.each{ |g| g.explode }
-
-            # Prevent interference with the original faces by moving them far away
+            # Calculating a translation that will used soon, before making groups
             bb = model.bounds
             minDist = [bb.max.x, bb.min.x, bb.max.y, bb.min.y, bb.max.z, bb.min.z].collect{|n| n.abs.ceil}.min
             safeDistance = 10000.m
@@ -127,6 +117,18 @@ module AlexHall
             end
             point -= CustomBounds.new(facesToFit).center
             safetyMove = Geom::Transformation.translation(point)
+
+            #### Making a copy of the faces (that is offset if appropriate) being fitted as a group
+
+            offsetDist = params[5].m
+            offsetDist = 0.01.m if offsetDist==0
+
+            # Create an array of groups called 'groups', where each group is actually a single face (this helps to avoid intersection problems)
+            groupsOriginal = facesToFit.collect{ |f| entities.add_group([f]) }
+            groups = groupsOriginal.collect{ |g| g.copy }
+            groupsOriginal.each{ |g| g.explode }
+
+            # Prevent interference with the original faces by moving them far away
             entities.transform_entities(safetyMove, groups)
 
             # Reset facesToFit to be an array containing the new copied faces.
@@ -154,11 +156,10 @@ module AlexHall
 
                 if not edgesToErase.empty?
                     faceGroup.entities.erase_entities(edgesToErase)
-                    facesToFit = faceGroup.entities.to_a.select{ |ent| ent.is_a? Sketchup::Face }
                 end
 
                 groups = []
-                faceGroup.explode
+                facesToFit = faceGroup.explode.grep(Sketchup::Face)
 
                 for face in facesToFit
                     singleFaceGroup = entities.add_group([face])
@@ -176,8 +177,7 @@ module AlexHall
             groups.each{|g|
                 g.explode
             }
-            facesToFit = faceGroup.entities.to_a.select{ |ent| ent.is_a? Sketchup::Face }
-            faceGroup.explode
+            facesToFit = faceGroup.explode.grep(Sketchup::Face)
 
             #### Rotating
 
