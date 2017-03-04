@@ -1,0 +1,139 @@
+<html>
+
+<head>
+<script type="text/javascript" src="jscolor/jscolor.js"></script>
+<link rel="stylesheet" href="style.css" />
+<meta http-equiv="MSThemeCompatible" content="Yes">
+
+<script type="text/javascript">
+	
+	function callRuby(actionName) {
+		try {
+		
+			if (actionName!="cancel") {
+				var warning = null;
+				var maxval = parseFloat(document.getElementById("maxval").value);
+				var minval = parseFloat(document.getElementById("minval").value);
+				if (maxval > 100 || maxval <= 0) {
+					warning = "Invalid maximum value";
+				} else if  (minval >= 100 || minval < 0) {
+					warning = "Invalid minimum value";
+				} else if (maxval < minval) {
+					alert(maxval+' '+minval+ ' '+(maxval < minval)+' '+(maxval > minval)+' '+(maxval - minval))
+					warning = "The maximum value cannot be less than the minimum value";
+				}
+				
+				if (warning != null) {
+					alert(warning);
+					return;
+				}
+			}
+			// Get all the data into one space separated string and send it to Ruby
+			var data = actionName + ' '
+			
+			var numColours = document.getElementById("numColours").value
+			data += numColours.toString() + ' '
+			for (var i=7-numColours; i<7; i++) {
+				data += document.getElementById("colour"+i.toString()).value.toString() + ' '
+			}
+
+			data += document.getElementById("colorBasis").selectedIndex + ' '
+			data += document.getElementById("maxColOn").checked.toString().charAt(0) + ' '
+			data += document.getElementById("minColOn").checked.toString().charAt(0)
+			
+			window.location.href = 'skp:get_data@' + data
+		}
+		
+		catch(err) {
+			alert(err.message);
+		}
+		
+	}
+	
+	function addColour() {
+		var n = document.getElementById("numColours").value
+		if (n<7) {
+			document.getElementById("colour"+(6-n)).style.display='block'
+			document.getElementById("numColours").value = (parseInt(n)+1).toString()		
+		}
+	}
+	
+	function removeColour() {
+        var n = document.getElementById("numColours").value
+		if (n > 1) {
+			n = (n-1).toString()
+			elem = document.getElementById('colour'+(6-n));
+			elem.style.display = 'none'
+			document.getElementById("numColours").value = n
+		}
+	}
+	
+	function populate(numCols, maxCol, minCol, colours, maxColVal, minColVal, colorBasis) {
+	
+		try {
+			jscolor.init();
+			for (var i=1; i<numCols; i++) { addColour(); }
+			
+			if (maxCol == colours[0]) {
+				document.getElementById("maxColOn").checked = ""
+			} else {
+				document.getElementById("colourmax").color.fromString(maxCol)
+			}
+			
+			if (minCol == colours[numCols-1]) {
+				document.getElementById("minColOn").checked = ""
+			} else {
+				document.getElementById("colourmin").color.fromString(minCol)
+			}
+			
+			for (var i=0; i<numCols; i++) {
+				document.getElementById("colour"+(6-i)).color.fromString(colours[i]);
+			}
+			
+			document.getElementById("minval").value = minColVal;
+			document.getElementById("maxval").value = maxColVal;
+			document.getElementById("colorBasis").selectedIndex = colorBasis;
+			
+		} catch(err) { alert(err.message); }
+	}	
+	
+</script>
+
+</head>
+
+<body bgcolor=#A5AAC7c onload="window.location.href = 'skp:pop@pop';">
+
+<form>
+
+<table>
+<tr><td>Maximum catchall color: <input type="checkbox" name="maxColOn" id="maxColOn" checked="checked"> </td><td><input class="color" value="800000" size="2" id="colourmax"></td></tr>
+<tr><td>Maximum value:</td><td> <input type="text" class="textinput" name="maxval" id="maxval" value="80" size="2">%</td></tr>
+		<tr><td></td><td><input class="color" value="ff0000" size="2" id="colour6"></td></tr>
+		<tr><td></td><td><input class="color" value="ffff00" size="2" id="colour5" style="display:none;"></td></tr>
+		<tr><td></td><td><input class="color" value="0000ff" size="2" id="colour4" style="display:none;"></td></tr>
+		<tr><td></td><td><input class="color" value="008000" size="2" id="colour3" style="display:none;"></td></tr>
+		<tr><td></td><td><input class="color" value="ff00ff" size="2" id="colour2" style="display:none;"></td></tr>
+  		<tr><td></td><td><input class="color" value="00ffff" size="2" id="colour1" style="display:none;"></td></tr>
+		<tr><td></td><td><input class="color" value="ffffff" size="2" id="colour0" style="display:none;"> <input type="button" onclick="addColour()" value="+">	<input type="button" onclick="removeColour()" value="-"></td></tr>
+<tr><td>Minimum value:</td><td><input type="text" class="textinput" name="minval" id="minval" value="0" size="2">%</td></tr>
+<tr><td>Minimum catchall color: <input type="checkbox" name="minColOn" id="minColOn" checked="checked"> </td><td><input class="color" value="00ff00" size="2" id="colourmin"></td></tr>
+</table>
+
+<input type="hidden" name="numColours" id="numColours" value="1">
+
+<p>Color cells based on <select id="colorBasis" name="colorBasis">
+<option>average</option>
+<option>maximum</option>
+<option>minimum</option>
+</select> of corner nodes.</p>
+
+<p>
+	<input type="button" onclick="callRuby('submit')" value="OK">
+	<input type="button" onclick="callRuby('apply')" value="Apply">
+	<input type="button" onclick="callRuby('cancel')" value="Cancel">
+	<input type="button" onclick="callRuby('default')" value="Set to default">
+</p>
+
+</form>
+</body>
+</html>

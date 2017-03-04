@@ -1,0 +1,95 @@
+<html>
+
+<head>
+<meta http-equiv="MSThemeCompatible" content="Yes">
+
+<link rel="stylesheet" href="style.css" />
+
+<script>
+	function callRuby(actionName) {
+		window.location.href = 'skp:get_data@' + actionName + ' ' + document.getElementById("densityType").selectedIndex + ' ' + document.getElementById("density").value + ' ' + document.getElementById("raiseHeight").value + ' ' + document.getElementById("excludeNodes").checked.toString().charAt(0) + ' ' + document.getElementById("numNodes").value + ' ' + document.getElementById("offset").value
+	}
+
+	function densityDefault() {
+		try {
+			var textF = document.getElementById("density");
+			if (document.getElementById("densityType").value == "Approximate width of cells (m)") 
+				textF.value = "1.00"
+			else
+				textF.value = "10"
+		}
+		catch(err) { alert(err.message);}
+	}
+
+	function ableNumNodes() {
+		if (document.getElementById("excludeNodes").checked==true) {
+			document.getElementById("numNodes").disabled = false
+			document.getElementById("numNodes").style.backgroundColor = "#FFFFFF"
+		} else {
+			document.getElementById("numNodes").disabled = true
+			document.getElementById("numNodes").style.backgroundColor = "#CCCCCC"
+		}
+	}
+
+	function populate(parameters) {
+		window.blur(); window.focus();
+		parameters = parameters.split(" ");
+		var actionName = parameters.shift();
+		document.getElementById("densityType").selectedIndex = parameters.shift();
+		document.getElementById("density").value = parameters.shift();
+		document.getElementById("raiseHeight").value = parameters.shift();
+		document.getElementById("excludeNodes").checked = (parameters.shift()=="t");
+		ableNumNodes();
+		document.getElementById("numNodes").value = parameters.shift();
+		document.getElementById("offset").value = parameters.shift();
+	}
+	
+	function setIEQDefaults() {
+		populate("default 2 0.5 0.72 t 3 1.5");
+	}
+
+</script>
+
+</head>
+
+<body bgcolor=#A5AAC7c onload="window.location.href = 'skp:pop@pop'">
+<form>
+
+<select id="densityType" name="densityType" onChange="densityDefault()">
+<option>Number of cells on long side</option>
+<option>Number of cells on short side</option>
+<option>Approximate width of cells (m)</option>
+</select>:
+<input class="textinput" type="text" value="10" name="density" id="density">
+<br/>
+<br/>
+<label for="raiseHeight">Height to raise grid off face (m):</label>
+<input class="textinput" type="text" value="0.72" name="raiseHeight" id="raiseHeight">
+
+
+<br/>
+<br/>
+<label for="excludeNodes">Exclude interior nodes:</label>
+<input type="checkbox" name="excludeNodes" id="excludeNodes" checked="checked" onChange="ableNumNodes()">
+
+<br/>
+<label for="numNodes">Number of nodes:</label>
+<input class="textinput" type="text" value="4" name="numNodes" id="numNodes">
+
+
+<br/>
+<br/>
+<label for="offset">Distance to offset face inwards (m):</label>
+<input class="textinput" type="text" value="1.00" name="offset" id="offset">
+
+
+<p>
+	<input type="button" onclick="callRuby('submit')" value="OK">
+	<input type="button" onclick="callRuby('cancel')" value="Cancel">
+	<input type="button" onclick="callRuby('default')" value="Save as model defaults">
+	<input type="button" onclick="setIEQDefaults()" value="Restore IEQ defaults">
+</p>
+
+</form>
+</body>
+</html>

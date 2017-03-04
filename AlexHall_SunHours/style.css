@@ -1,0 +1,1 @@
+*[hidden] {  display: none;}div.ui-datepicker {	font-size:10pt;}.textinput, .color {	 /*Important due to WebKit bug that causes text inputs to be black. Make sure that text-type inputs have textinput class.*/	 -webkit-appearance: none;}

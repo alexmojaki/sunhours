@@ -1,0 +1,43 @@
+<html>
+
+<head>
+<link rel="stylesheet" href="style.css" />
+
+<script type="text/javascript">
+	
+	function callRuby(data) {
+		try {
+			window.location.href = 'skp:select_grid@' + data
+		}
+		
+		catch(err) {
+			alert(err.message);
+		}
+		
+	}
+	
+	function populate(idSet) {
+	
+		try {
+			for (var i=0; i<idSet.length; i++) {
+				document.getElementById("buttons").innerHTML += '<p><input type="button" onclick="callRuby(\'submit '+i+'\')" value="'+idSet[i]+'" size="10"></p>'
+			}
+			
+		} catch(err) { alert(err.message); }
+	}	
+	
+</script>
+
+<meta http-equiv="MSThemeCompatible" content="Yes">
+</head>
+
+<body bgcolor=#A5AAC7c onload="window.location.href = 'skp:pop@pop';">
+
+<h4>Select the ID of the grid to import:</h4>
+
+<div id="buttons"></div>
+
+<p><input type="button" id="cb" onclick="callRuby('cancel')" value="Cancel"></p>
+
+</body>
+</html>

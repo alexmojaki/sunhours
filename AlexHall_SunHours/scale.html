@@ -1,0 +1,270 @@
+<html>
+
+<head>
+<meta http-equiv="MSThemeCompatible" content="Yes">
+<style>
+table {border-spacing: 0;}
+td {border-width:0; padding: 0 3px; margin: 0; font-size: smaller;}
+body {margin: 2px;}
+</style>
+
+        <script src="raphael-min.js"></script>
+		
+<script type="text/javascript">
+
+function makeGradientDeprecated(cols, maxWeight, minWeight, totalHours, maxCol, minCol) {
+try {
+	var steps = 100;
+	var labelHeight = 20;
+	var labelWeights = [80,50,20];
+	var tooClose = 1.5;
+	
+	if (minWeight>0) {
+		labelWeights[2] = minWeight;
+	}
+	
+	if (maxWeight<100) {
+		labelWeights[0] = maxWeight;
+	}
+	
+	var highMin = lowMax = veryHighMin = veryLowMax = false;
+	
+	if (Math.abs(labelWeights[0]-labelWeights[2]) < labelHeight) {
+		if (minWeight >= 100-labelHeight) {
+			highMin = true;
+			if (minWeight >= 100-labelHeight/2) {
+				veryHighMin = true;
+			}
+			labelWeights = [minWeight, minWeight, minWeight];
+		} else if (maxWeight <= labelHeight) {
+			lowMax = true;
+			if (maxWeight <= labelHeight/2) {
+				veryLowMax = true;
+			}
+			labelWeights = [maxWeight, maxWeight, maxWeight];
+		} else if (maxWeight<100) {
+			labelWeights[1] = labelWeights[2] = maxWeight;
+		} else {
+			labelWeights = [minWeight, minWeight, minWeight]
+		}
+	} else if (Math.abs(labelWeights[0]-labelWeights[2]) < labelHeight*2) {
+		labelWeights[1] = labelWeights[0];
+	} else {
+		labelWeights[1] = Math.round((labelWeights[0]+labelWeights[2])/2);
+	}
+	
+	var highMax = (!(highMin || lowMax) && maxWeight>100-labelHeight/2 && maxWeight < 100)
+	var lowMin = (!(highMin || lowMax) && minWeight<labelHeight/2 && minWeight>0)
+	
+	var bands = cols.length-1;
+	var weight, w;
+	var colour = [0,0,0]
+	var content = '<tr><td></td><td style="text-align: center;">'+Math.round(totalHours)+'h</td><td></td></tr>';
+	for (var i=0; i<=steps; i++) {
+	
+		content += '<tr>'
+		
+		// Number of hours on the left
+		var labeled = ((lowMin || veryLowMax) && i>=steps-labelHeight+1 || (highMax || veryHighMin) && i<labelHeight);
+		var write = -1;
+		if (i==steps-labelHeight+1) {
+			if (lowMin) {
+				write = minWeight;
+			} else if (veryLowMax) {
+				write = maxWeight;
+			}
+		} else if (i==0) {
+			if (highMax) {
+				write = maxWeight;
+			} else if (veryHighMin) {
+				write = minWeight;
+			}
+		}
+		if (!labeled) {
+			for (var j=0; j<labelWeights.length; j++) {
+				lw = labelWeights[j]
+				if (Math.round((1-lw/100)*steps-labelHeight/2)<=i && Math.round((1-lw/100)*steps+labelHeight/2)>i) {
+					if (lowMin && lw/100*steps<=labelHeight*tooClose || highMax && (1-lw/100)*steps<=labelHeight*tooClose) {
+						labeled = false;
+						break;
+					} else {
+						labeled = true;
+					}
+				}
+				if (Math.round((1-lw/100)*steps-labelHeight/2)==i) {
+					write = lw;
+					break;
+				}
+			}
+		}
+		
+		if (!labeled) {
+			content += '<td></td>';
+		} else if (write!=-1) {
+			content += '<td style="text-align: right;" rowspan="'+labelHeight+'">'+Math.round(write/100*totalHours)+'h</td>';
+		}
+			
+		// The colour gradient itself
+		weight = 1-i/steps
+		var w = 0;
+
+		if (weight > maxWeight/100)
+			colour = maxCol;
+		else if (weight < minWeight/100)
+			colour = minCol;
+		else {
+			weight = Math.max(Math.min((weight - minWeight/100)/((maxWeight-minWeight)/100),1),0)
+			
+			for (var j=0; j<bands; j++) {
+				if (weight >= j/bands && weight <= (1+j)/bands) {
+					w = (weight-j/bands)*bands
+					for (var k=0; k<3; k++) {
+						colour[k] = Math.round(cols[j+1][k]*w + cols[j][k]*(1-w))
+					}
+				}
+			}
+		}
+		
+		content += '<td height="1" width="50" style="background: none repeat scroll 0% 0% rgb(' + colour[0] + ',' + colour[1] + ',' + colour[2] + ');"></td>'
+		
+		// Percentages on the right
+		if (!labeled) {
+			content += '<td></td>';
+		} else if (write!=-1) {
+			content += '<td rowspan="'+labelHeight+'">'+write+'%</td>';
+		}
+		
+		content += '</tr>'
+	}
+	content += '<tr><td></td><td style="text-align: center;">0</td><td></td></tr>'
+	document.getElementById("scale").innerHTML = content;
+	}
+	catch (err) {alert(err.message)}
+}
+
+function dash(paper, xLeft, xRight, y) {
+	return paper.path("M"+xLeft+","+y+"L"+xRight+","+y);
+}
+
+function makeGradient(cols, maxWeight, minWeight, totalHours, maxCol, minCol) {
+	
+	try {
+		var rectX = 50,
+			textXSpacing = 5,
+			topRectY = 20,
+			rectWidth = 50,
+			scaleHeight = 120,
+			canvasWidth = 180,
+			canvasHeight = 15 + scaleHeight + topRectY
+			ANGLE = "90",
+			CENT = 100,
+			textFormatting = { "font-family" : "Times New Roman" , "font-size" : 15 };
+
+		var heightFactor = scaleHeight/CENT,
+			minWeightSpacing = 20,
+			minLabelSpacing = minWeightSpacing * heightFactor;
+		
+		Raphael.fn.scaleRect = function(y, height, fillString) {
+			return this.rect(rectX, y, rectWidth, height).attr("fill", fillString);
+		}
+		
+		var dashInWidth = textXSpacing,
+			dashOutWidth = textXSpacing/2,
+			rectRightX = rectX + rectWidth,
+			percentageX = rectRightX + textXSpacing,
+			percentageDashXLeft = rectRightX - dashInWidth,
+			percentageDashXRight = rectRightX + dashOutWidth;
+		Raphael.fn.writePercentage = function(y, weight) {
+			this.text(percentageX, y, Math.round(weight)+"%")
+			.attr("text-anchor", "start")
+			.attr(textFormatting);
+			dash(this, percentageDashXLeft, percentageDashXRight, y);
+		}
+		
+		var hourX = rectX - textXSpacing,
+			hourDashXLeft = rectX - dashOutWidth,
+			hourDashXRight = rectX + dashInWidth;
+		Raphael.fn.writeHours = function(y, hours) {
+			this.text(hourX, y, Math.round(hours)+"h")
+			.attr("text-anchor", "end")
+			.attr(textFormatting);
+			dash(this, hourDashXLeft, hourDashXRight, y);
+		}
+		
+		document.getElementById("canvas").innerHTML="";
+		var paper = Raphael("canvas", canvasWidth, canvasHeight);
+		
+		paper.text(rectX + rectWidth/2, topRectY/2, Math.round(totalHours)+"h").attr(textFormatting);
+
+		var y = topRectY,
+			height = (CENT - maxWeight) * heightFactor,
+			topRect = paper.scaleRect(y, height, maxCol);
+
+		y += height;
+		height = (maxWeight - minWeight) * heightFactor;
+		var gradRect = paper.scaleRect(y, height, ANGLE+"-"+cols);
+
+		var midLabels = Math.floor(height/minLabelSpacing),
+			labelSpacing = height/midLabels;
+			weightSpacing = (maxWeight - minWeight)/midLabels;
+		for (var i=1; i < midLabels; i++) {
+			midWeight = maxWeight - i*weightSpacing;
+			midHours = midWeight/CENT * totalHours;
+			midY = y + labelSpacing*i;
+			paper.writePercentage(midY, midWeight);
+			paper.writeHours(midY, midHours);
+		}
+
+		drawMax = maxWeight < CENT;
+		drawMin = minWeight > 0;
+
+		if (midLabels <= 1) {
+			if (drawMin && minWeight > CENT - minWeightSpacing) {
+				drawMax = false;
+			} else if (drawMax) {
+				drawMin = false;
+			}
+		}
+
+		if (drawMax) {
+			paper.writePercentage(y, maxWeight);
+			paper.writeHours(y, maxWeight/CENT * totalHours);
+		}
+
+		y += height;
+		height = minWeight * heightFactor;
+		var bottomRect = paper.scaleRect(y, height, minCol);
+
+		if (drawMin) {
+			paper.writePercentage(y, minWeight);
+			paper.writeHours(y, minWeight/CENT * totalHours);
+		}
+
+		paper.set().push(topRect, gradRect, bottomRect).attr("stroke-width", 0);
+		paper.rect(rectX, topRectY, rectWidth, scaleHeight).attr("stroke-opacity", 0.5);
+		
+		paper.renderfix(); paper.safari();
+	}
+	catch (err) {alert(err.message)}
+}
+
+function grayGradient() {
+	document.getElementById("canvas").innerHTML = '<table><tr><td height="100" width="100" bgcolor=#808080>Grids with different settings selected</td></tr></table>'
+}
+
+</script>
+
+</head>
+
+<body onload="window.location.href = 'skp:pop@pop';"><!-- test: onload='makeGradient("#f00-#0f0", 90, 20, 1007, "#fff", "#000")'> -->
+
+<!-- For use by makeGradientDeprecated -->
+<table id="scale"></table>
+
+<div id="canvas"></div>
+		
+<center><input type="button" onclick="window.location.href = 'skp:edit_scale@hi'" value="Edit scale"></center>
+
+</body>
+
+</html>

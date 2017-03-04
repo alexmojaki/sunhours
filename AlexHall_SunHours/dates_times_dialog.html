@@ -1,0 +1,544 @@
+<html>
+
+<head>
+
+<meta http-equiv="MSThemeCompatible" content="Yes">
+<link rel="stylesheet" href="jquery-ui-1.9.1.custom/css/ui-lightness/jquery-ui-1.9.1.custom.css" />
+<script src="jquery-ui-1.9.1.custom/js/jquery-1.8.2.js"></script>
+<script src="jquery-ui-1.9.1.custom/js/jquery-ui-1.9.1.custom.js"></script>
+
+<link rel="stylesheet" href="style.css" />
+
+<script type="text/javascript">
+
+	function isNumber(n) {
+		return !isNaN(parseFloat(n)) && isFinite(n);
+	}
+
+	function callRuby(actionName) {
+	
+		if (actionName == "cancel") {
+			window.location.href = 'skp:get_data@cancel'
+			return;
+		}
+			
+		try {
+			// Handling erroneous date input 
+			var dates_ordered = true;
+			
+			for (i=0; i<document.getElementById("numDates").value-1; i++) {
+				var from = $("#from"+(i+1));
+				var to = $("#to"+i);
+				var fromDate = new Date(from.datepicker("getDate"));
+				var toDate =  new Date(to.datepicker("getDate"));
+				if (fromDate <= toDate) {
+					dates_ordered = false;
+				}
+			}
+			
+			// Handling erroneous time input
+			var times_valid = true; var times_ordered = true;
+			for (var j=0; j<document.getElementById("numTypes").value; j++) {
+				var prev_time = false;
+				for (var i=0; i<document.getElementById("numTimes"+j).value; i++) {
+				
+					var sm = document.getElementById("startMinute_"+j+','+i).value
+					var em = document.getElementById("endMinute_"+j+','+i).value
+					var sh = document.getElementById("startHour_"+j+','+i).value
+					var eh = document.getElementById("endHour_"+j+','+i).value
+					
+					if (sm<0 || em<0 || sm>59 || em>59 || sh<0 || eh<0 || sh>23 || eh>23 || !isNumber(sm) || !isNumber(em) || !isNumber(sh) || !isNumber(eh)) {
+						times_valid = false;
+					}
+											
+					start_time = new Date(2001, 1, 1, sh, sm)
+					if (prev_time && start_time < prev_time) {
+						times_ordered = false;
+					}
+										
+					prev_time = new Date(2001, 1, 1, eh, em)
+					if (start_time >= prev_time) {
+						times_ordered = false;
+					}
+				}
+			}
+			
+			timeStep = document.getElementById("timeStep").value;
+			
+			if (!dates_ordered) {
+				alert("Dates not in order");
+			} else if (!times_valid) {
+				alert("Invalid time entered");
+			} else if (!times_ordered) {
+				alert("Times not in order");
+			} else if ( !isNumber(timeStep) ) {
+                alert("The minimum allowed time step is 1 minute.")
+			} else if ( parseFloat(timeStep).value<1/60 ) {
+                alert("The minimum allowed time step is 1 minute.")
+			} else {
+				// Get all the data into one space separated string
+				var data = actionName + ' ';
+				var numDates = document.getElementById("numDates").value
+				data += numDates.toString() + ' '
+				for (var i=0; i<numDates; i++) {
+					var from = $("#from"+i);
+					var to = $("#to"+i);
+					var fromDate = from.datepicker("getDate");
+					var toDate = to.datepicker("getDate");
+					data += fromDate.getDate() + ' '
+					data += (fromDate.getMonth()+1) + ' '
+					data += toDate.getDate() + ' '
+					data += (toDate.getMonth()+1) + ' '
+				}
+				
+				// Times within types
+				var numTypes = document.getElementById("numTypes").value;
+				data += numTypes + ' ';
+				for (var j=0; j<numTypes; j++) {
+					var numTimes = document.getElementById("numTimes"+j).value;
+					data += numTimes + ' '
+					for (var i=0; i<numTimes; i++) {
+						data += document.getElementById('startHour_'+j+','+i).value + ' ';
+						data += document.getElementById('startMinute_'+j+','+i).value + ' ';
+						data += document.getElementById('endHour_'+j+','+i).value + ' ';
+						data += document.getElementById('endMinute_'+j+','+i).value + ' ';
+					}
+				}
+				
+				// Weekdays to include (also within types)
+				for (var j=0; j<numTypes; j++) {
+					for (var i=0; i<7; i++) {
+						data += document.getElementById("week"+j+','+i).checked.toString().charAt(0) + ' ';
+					}
+				}
+
+				data += document.getElementById("timeStep").value + ' '
+                data += document.getElementById("mins").checked.toString().charAt(0) + ' '
+				data += document.getElementById("maxs").checked.toString().charAt(0);
+				
+				window.location.href = 'skp:get_data@' + data;
+			}
+		}
+		
+		catch(err) {
+			alert(err.message);
+		}
+		
+	}
+	
+	function addDates() {
+		
+		var n = document.getElementById("numDates").value
+		var nn = parseInt(n);
+		
+		var fromDates = new Array();
+		var toDates = new Array();
+		for (i=0; i<nn; i++) {
+			var from = $("#from"+i);
+			var to = $("#to"+i);
+			fromDates[i] = from.datepicker("getDate");
+			toDates[i] = to.datepicker("getDate");
+		}
+		
+		nn++;
+		
+		// Update number of date periods
+		document.getElementById("numDates").value = nn.toString();	
+		
+		//Datepickers
+		content = ''
+		for (i=0; i<nn; i++) {
+			n = i.toString();
+			content+='<div id="dateperiod'+n+'"><p>Start date: <input class="textinput" type="text" id="from'+n+'" name="from" size="5"/> '+
+					'<select id="specialFrom'+n+'" name="specialFrom'+n+'" onChange="setSpecialFrom('+n+')">'+
+					'<option>-- Special date --</option>' +
+					'<option>March Equinox</option>' +
+					'<option>June Solstice</option>' +
+					'<option>September Equinox</option>' +
+					'<option>December Solstice</option>' +
+					'</select></p><p>End date: <input class="textinput" type="text" id="to'+n+'" name="to" size="5"/> ' +
+					'<select id="specialTo'+n+'" name="specialTo'+n+'" onChange="setSpecialTo('+n+')">'+
+					'<option>-- Special date --</option>' +
+					'<option>March Equinox</option>' +
+					'<option>June Solstice</option>' +
+					'<option>September Equinox</option>' +
+					'<option>December Solstice</option>' +
+					'</select></p></div>'
+		}
+
+		//Add to doc
+		document.getElementById("dates").innerHTML = content;
+		
+		//Apply jQuery stuff
+		$(function() {
+		
+			for (var i=0; i<nn; i++) {
+				var from = $("#from"+i);
+				var to = $("#to"+i);
+				from.datepicker({
+					changeMonth: true,
+					dateFormat: "d M          yy",
+					minDate: new Date(2015,0,1),
+					defaultDate: new Date(2015,0,1),
+					maxDate: new Date(2015,11,31),
+					idnum: i,
+					onClose: function( selectedDate ) {
+						($("#to"+this.id.slice(4))).datepicker( "option", "minDate", selectedDate );
+					}
+				});
+				from.datepicker("setDate", new Date(2015,0,1));
+				if (i<nn-1) {
+					from.datepicker("setDate", fromDates[i]);
+					from.datepicker( "option", "maxDate", toDates[i] );
+				}
+				
+				to.datepicker({
+					changeMonth: true,
+					dateFormat: "d M          yy",
+					minDate: new Date(2015,0,1),
+					defaultDate: new Date(2015,11,31),
+					maxDate: new Date(2015,11,31),
+					idnum: i,
+					onClose: function( selectedDate ) {
+						($("#from"+this.id.slice(2))).datepicker( "option", "maxDate", selectedDate );
+					}
+				});
+				to.datepicker("setDate", new Date(2015,0,31));
+				if (i<nn-1) {
+					to.datepicker("setDate", toDates[i]);
+					to.datepicker( "option", "minDate", fromDates[i] );
+				}
+			}
+		});
+
+	}
+	
+	function setFromDate(n, date) {
+		var from = $("#from"+n);
+		var to = $("#to"+n);
+		from.datepicker("setDate", date)
+		to.datepicker("option", "minDate", date)
+	}
+	
+	function setToDate(n, date) {
+		var from = $("#from"+n);
+		var to = $("#to"+n);
+		to.datepicker("setDate", date)
+		from.datepicker("option", "maxDate", date)
+	}
+	
+
+	
+	function setSpecialFrom(n) {
+		var sel = document.getElementById("specialFrom"+n); 
+		var to = $("#from"+n);
+		var index = sel.selectedIndex
+		if (index>0) {
+			setFromDate(n, [new Date(2015,2,20), new Date(2015,5,21), new Date(2015,8,23), new Date(2015,11,21)][index-1])
+		}
+	}
+		
+	function setSpecialTo(n) {
+		var sel = document.getElementById("specialTo"+n); 
+		var to = $("#to"+n);
+		var index = sel.selectedIndex
+		if (index>0) {
+			setToDate(n, [new Date(2015,2,20), new Date(2015,5,21), new Date(2015,8,23), new Date(2015,11,21)][index-1])
+		}
+	}
+	
+	function addTimes(m) {
+		
+		// Get number of time periods, and update it
+		var n = document.getElementById("numTimes"+m).value
+		document.getElementById("numTimes"+m).value = parseInt(n)+1
+		
+		// Collect data about current settings
+		type = [];
+		for (var i=0; i<n; i++) {
+			start = [ document.getElementById('startHour_'+m+','+i).value, document.getElementById('startMinute_'+m+','+i).value ];
+			end = [ document.getElementById('endHour_'+m+','+i).value, document.getElementById('endMinute_'+m+','+i).value ];
+			type = type.concat([[start, end]]);
+		}
+		
+		// Add time period
+		var content = '<div id="timeperiod_'+m+','+n+'"><p>Start time: <input class="textinput" type="text" value="7" name="startHour_'+m+','+n+'" id="startHour_'+m+','+n+'" size="2"> : <input class="textinput" type="text" value="00" name="startMinute_'+m+','+n+'" id="startMinute_'+m+','+n+'" size="2"></p>\
+					                        <p>End time: <input class="textinput" type="text" value="18" name="endHour_'+m+','+n+'" id="endHour_'+m+','+n+'" size="2"> : <input class="textinput" type="text" value="00" name="endMinute_'+m+','+n+'" id="endMinute_'+m+','+n+'" size="2"></p></div>'
+		
+		document.getElementById("times"+m).innerHTML += content;
+		
+		// Restore old data
+		for (var i=0; i<n; i++) {
+			document.getElementById('startHour_'+m+','+i).value = type[i][0][0];
+			document.getElementById('startMinute_'+m+','+i).value = type[i][0][1];
+			document.getElementById('endHour_'+m+','+i).value = type[i][1][0];
+			document.getElementById('endMinute_'+m+','+i).value = type[i][1][1];
+		}
+		
+		
+	}
+	
+	 function removeTimes(m) {
+		var n = parseInt(document.getElementById("numTimes"+m).value)
+		if (n > 1) {
+			n = (n-1).toString()
+			var elem = document.getElementById('timeperiod_'+m+','+n);
+			elem.parentNode.removeChild(elem);
+			document.getElementById("numTimes"+m).value = n
+		}
+	}
+	
+	function removeDates() {
+		var n = parseInt(document.getElementById("numDates").value)
+		if (n > 1) {
+			n = (n-1).toString()
+			var elem = document.getElementById('dateperiod'+n);
+			elem.parentNode.removeChild(elem);
+			document.getElementById("numDates").value = n
+		}
+	}
+	
+	function addType() {
+		
+		// Get number of types, and update it
+		var n = document.getElementById("numTypes").value;
+		document.getElementById("numTypes").value = parseInt(n)+1;
+		
+		// Collect data about current settings
+		var times = [];
+		var start, end, type;
+		for (var j=0; j<n; j++) {
+			type = [];
+			var numTimes = document.getElementById("numTimes"+j).value;
+			for (var i=0; i<numTimes; i++) {
+				start = [ document.getElementById('startHour_'+j+','+i).value, document.getElementById('startMinute_'+j+','+i).value ];
+				end = [ document.getElementById('endHour_'+j+','+i).value, document.getElementById('endMinute_'+j+','+i).value ];
+				type = type.concat([[start, end]]);
+			}
+			times = times.concat([type]);
+		}
+
+		var weeks = [];
+		for (var j=0; j<n; j++) {
+			var week = [];
+			for (var i=0; i<7; i++) {
+				week = week.concat([document.getElementById("week"+j+','+i).checked]);
+			}
+			weeks = weeks.concat([week]);
+		}
+		
+		// Stuff to add
+		
+		var content = '\
+		<div id="type'+n+'">\
+			<input type="hidden" name="numTimes'+n+'" id="numTimes'+n+'" value="0">\
+			<div id="times'+n+'">\
+			</div>\
+			<p><input type="button" onclick="addTimes('+n+')" value="Add another period within a day">\
+			<p><input type="button" onclick="removeTimes('+n+')" value="Remove the last period within a day">\
+			<p>Applies to weekdays:\
+			<table>\
+				<tr>\
+					<td>Mo</td>\
+					<td>Tu</td>\
+					<td>We</td>\
+					<td>Th</td>\
+					<td>Fr</td>\
+					<td>Sa</td>\
+					<td>Su</td>\
+				</tr>\
+				<tr>'
+		
+		for (var i=0; i<7; i++) {
+			content += '<td><input type="checkbox" name="week'+n+','+i+'" id="week'+n+','+i+'" onclick="checkWeek('+n+','+i+')" ';
+			var check = (n>0 || i<5);
+			for (var j=0; j<n; j++) {
+				if (document.getElementById('week'+j+','+i).checked) {
+					check = false;
+					break;
+				}
+			}
+			if (check) { content += 'checked="checked"'; }
+			content += '></td>';
+		}
+		
+		content += '\
+					</tr>\
+			</table>\
+			<hr>\
+		</div>'		
+		
+		//Add to doc
+		document.getElementById("types").innerHTML += content;
+		
+		addTimes(n)
+		
+		// Resetting the old content
+		for (var j=0; j<n; j++) {
+			var numTimes = document.getElementById("numTimes"+j).value;
+			for (var i=0; i<numTimes; i++) {
+				document.getElementById('startHour_'+j+','+i).value = times[j][i][0][0];
+				document.getElementById('startMinute_'+j+','+i).value = times[j][i][0][1];
+				document.getElementById('endHour_'+j+','+i).value = times[j][i][1][0];
+				document.getElementById('endMinute_'+j+','+i).value = times[j][i][1][1];
+			}
+			//times = times.concat([type]);
+		}
+
+		for (var j=0; j<n; j++) {
+			//var week = [];
+			for (var i=0; i<7; i++) {
+				document.getElementById("week"+j+','+i).checked = weeks[j][i];
+			}
+			//weeks = weeks.concat([week]);
+		}
+	}
+	
+	function removeType() {
+		var n = parseInt(document.getElementById("numTypes").value)
+		if (n > 1) {
+			n = (n-1).toString()
+			var elem = document.getElementById('type'+n);
+			elem.parentNode.removeChild(elem);
+			document.getElementById("numTypes").value = n
+		}
+	}
+	
+	function populate(data) {
+		window.blur(); window.focus();
+		try {
+			var parameters = data.split(" ");
+			
+			parameters.shift();
+									 
+			// Dates are in the form:
+			// [startDay0, startMonth0, endDay0, endMonth0, startDay1, startMonth1, end... ]
+			var numDates = parseInt(parameters.shift());
+
+			for (var i=0; i<numDates; i++) {
+				addDates();
+				var day = parseInt(parameters.shift()); var month = parseInt(parameters.shift())-1;
+				var date = new Date(2015, month, day);
+				setFromDate(i, date);
+				var day = parseInt(parameters.shift()); var month = parseInt(parameters.shift())-1;
+				var date = new Date(2015, month, day);
+				setToDate(i, date);
+			}
+					
+			// Time periods in a similar form to the dates, except that that form represents a single type
+			var numTypes = parseInt(parameters.shift());
+			
+			for (var j=0; j<numTypes; j++) {
+				var numTimes = parseInt(parameters.shift());
+				addType();
+				for (var i=0; i<numTimes-1; i++) {
+					addTimes(j);
+				}
+				for (var i=0; i<numTimes; i++) {
+					document.getElementById('startHour_'+j+','+i).value = parameters.shift();
+					document.getElementById('startMinute_'+j+','+i).value = parameters.shift();
+					document.getElementById('endHour_'+j+','+i).value = parameters.shift();
+					document.getElementById('endMinute_'+j+','+i).value = parameters.shift();
+				}
+			}
+			
+			// Weekday checkboxes
+			for (var j=0; j<numTypes; j++) {
+				for (var i=0; i<7; i++) {
+					document.getElementById("week"+j+','+i).checked = (parameters.shift()=="t");
+				}
+			}
+			
+			// Other values
+			document.getElementById("timeStep").value = parameters.shift();
+			document.getElementById("mins").checked = (parameters.shift()=="t");
+			document.getElementById("maxs").checked = (parameters.shift()=="t");
+		} catch(err) { alert(err.message) ;
+		throw(err);}
+	}
+	
+	function checkWeek(n,i) {
+		try {
+		if (document.getElementById('week'+n+','+i).checked) {
+			for (var m=0; m<document.getElementById('numTypes').value; m++) {
+				if (m!=n) {
+					document.getElementById('week'+m+','+i).checked = ""
+				}
+			}
+		} } catch(err) {alert(err.message) ; }
+	}
+	
+	function warnHidden() {
+		document.getElementById('hidden_warning').style.display = 'block'
+	}
+	
+	function setIEQDefaults() {
+		document.getElementById('types').innerHTML="";
+		document.getElementById('dates').innerHTML="";
+		document.getElementById('numTypes').value = 0;
+		document.getElementById('numDates').value = 0;
+		
+		populate('default 1 1 1 31 12 2 1 7 00 18 00 1 9 00 12 00 t t t t t f f f f f f f t f null f f');
+	}
+    
+    function setSavePath(path) {
+        document.getElementById('save_path').value = path
+    }
+    
+    function getSavePath() {
+        window.location.href = 'skp:save@save'
+    }
+	
+</script>
+
+</head>
+
+<body bgcolor=#A5AAC7c onload="window.location.href = 'skp:pop@pop'">
+
+<form>
+
+<h4>Set times: <input type="hidden" style="display:none;" name="numTypes" id="numTypes" value="0"></h4>
+
+<div id="types">
+</div>
+
+<p><input type="button" onclick="addType()" value="Add another weekday type">
+<p><input type="button" onclick="removeType()" value="Remove the last weekday type">
+
+<hr>
+
+<h4>Set dates: <input type="hidden" style="display:none;" name="numDates" id="numDates" value="0">
+</h4>
+
+
+<div id="dates">
+</div>
+
+<p><input type="button" onclick="addDates()" value="Add another period of days">
+<p><input type="button" onclick="removeDates()" value="Remove the last period of days">
+
+<hr>
+
+<h4>Additional options:</h4>
+
+<p>Time step: <input class="textinput" type="text" value="1" name="timeStep" id="timeStep" size="4"> hours</p>
+    
+<p>CSV file location: <input type="text" name="save_path" id="save_path"> <input type="button" onclick="getSavePath()" value="Browse"></p>
+
+<p>Include daily <u>minimum</u> values in CSV file: <input type="checkbox" name="mins" id="mins"></p>
+<p>Include daily <u>maximum</u> values in CSV file: <input type="checkbox" name="maxs" id="maxs"></p>
+
+<hr>
+
+<p id="hidden_warning" style="display:none;"><img src="warning_icon.png" alt="Warning" height="25" width="25"> <strong>WARNING:</strong> The model includes hidden elements which will not be included in the analysis.</p>
+
+<p>
+	<input type="button" onclick="callRuby('submit')" value="OK">
+	<input type="button" onclick="callRuby('cancel')" value="Cancel">
+	<input type="button" onclick="callRuby('default')" value="Save as model defaults">
+	<input type="button" onclick="setIEQDefaults()" value="Restore IEQ defaults">
+</p>
+
+</form>
+</body>
+</html>
