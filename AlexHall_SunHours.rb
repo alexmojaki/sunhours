@@ -5,16 +5,18 @@ require 'extensions.rb'
 
 #Sketchup.send_action "showRubyPanel:"
 
+version = '2.0.7'
+
 # Unregister other versions if necessary
 Sketchup.extensions.each { |ext|
-	if (ext.name == "Sunlight analysis" or ext.name == "SunHours") and ext.creator == "Alex Hall" and ext.registered? and ext.version != '2.0.7'
+	if (ext.name == "Sunlight analysis" or ext.name == "SunHours") and ext.creator == "Alex Hall" and ext.registered? and ext.version != version
 		ext.uncheck
 		UI.messagebox("Other version of SunHours detected and disabled. We recommend restarting Sketchup.")
 	end
 }
 
 sunHoursExtension = SketchupExtension.new "SunHours", "AlexHall_SunHours/interface.rb"
-sunHoursExtension.version = '2.0.7'
+sunHoursExtension.version = version
 sunHoursExtension.creator = 'Alex Hall'
 sunHoursExtension.copyright = '2015 Alex Hall'
 
