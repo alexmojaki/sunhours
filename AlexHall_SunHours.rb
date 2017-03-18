@@ -5,7 +5,7 @@ require 'extensions.rb'
 
 #Sketchup.send_action "showRubyPanel:"
 
-version = '2.0.7'
+version = '2.0.8'
 
 # Unregister other versions if necessary
 Sketchup.extensions.each { |ext|
