@@ -81,7 +81,7 @@ module AlexHall
                 
                 # Location of CSV file
                 savePath = dialog.get_element_value("save_path")
-                
+
                 if not savePath.empty?
                     
                     fullPath = File.expand_path(savePath)
@@ -163,6 +163,8 @@ module AlexHall
 
                     allResults += "\nGrid ID:, "+dict["id"].to_s+"\n\n"
 
+                    raw_table = ""
+
                     # Set up the three result grids (with zeroes) to store analysis results
                     totalsGrid = []; maxGrid = []; minGrid = []
                     for y in 0..ny
@@ -230,6 +232,8 @@ module AlexHall
 
                                 while shinfo["ShadowTime"] < endTime
 
+                                    pointLabel = 1
+
                                     # For each node...
                                     for y in 0..ny
                                         for x in 0..nx
@@ -242,7 +246,11 @@ module AlexHall
                                                 # The raytest is the crucial test for sunlight. Hidden geometry (and hence analysis grids) is ignored
                                                 ray = [p, shinfo["SunDirection"]]
                                                 intersection = model.raytest(ray)
-                                                dayGrid[y][x] += [timeStep, endTime-shinfo["ShadowTime"]].min.to_f/3600 if !intersection
+
+                                                raw_table += pointLabel.to_s + "," + shinfo["ShadowTime"].utc.to_s[0..-5] + "," + (!!intersection).to_s + "\n"
+
+                                                totalsGrid[y][x] = pointLabel
+                                                pointLabel += 1
                                             end
                                         end
                                     end
@@ -257,14 +265,14 @@ module AlexHall
 
                             # Use the day grid to update the three main result grids
                             # For each node:
-                            for y in 0..ny
-                                for x in 0..nx
-                                    val = dayGrid[y][x]
-                                    totalsGrid[y][x] += val
-                                    maxGrid[y][x] = [maxGrid[y][x], val].max
-                                    minGrid[y][x] = [minGrid[y][x], val].min
-                                end
-                            end
+#                             for y in 0..ny
+#                                 for x in 0..nx
+#                                     val = dayGrid[y][x]
+#                                     totalsGrid[y][x] += val
+#                                     maxGrid[y][x] = [maxGrid[y][x], val].max
+#                                     minGrid[y][x] = [minGrid[y][x], val].min
+#                                 end
+#                             end
 
                             # Show progress in the status bar (as text)
                             Sketchup.status_text=shinfo["ShadowTime"].strftime("Just analysed: %d %b") + (grids.length>1 ? (" for grid #{gridnum} out of #{grids.length}") : "")
@@ -281,7 +289,7 @@ module AlexHall
                     # Set all invalid nodes to -1 in the result grids
                     for y in 0..ny
                         for x in 0..nx
-                            totalsGrid[y][x] = maxGrid[y][x] = minGrid[y][x] = -1 if not nodes[y][x]
+                            totalsGrid[y][x] = maxGrid[y][x] = minGrid[y][x] = "" if not nodes[y][x]
                         end
                     end
 
@@ -293,12 +301,13 @@ module AlexHall
                     #### Colour the cells
 
                     # Update the progress in the status bar				
-                    Sketchup.status_text="Coloring grid" + (grids.length>1 ? (" #{gridnum} out of #{grids.length}") : "") + "..."
+#                     Sketchup.status_text="Coloring grid" + (grids.length>1 ? (" #{gridnum} out of #{grids.length}") : "") + "..."
 
-                    SunHours.color_grid(grid)
+#                     SunHours.color_grid(grid)
 
                     ## Add the results from the 3 grids to the output string for exporting to file
-                    allResults += "Totals:\n\n"
+                    allResults += "Point labels:\n\n"
+                    pointLabel = 1
                     for y in 0..ny
                         line = ""
                         for x in 0..nx
@@ -307,6 +316,8 @@ module AlexHall
                         end
                         allResults += line+"\n"
                     end
+
+                    allResults += "\nRaw data:\n\nPoint label,Date and time,In sunlight?\n" + raw_table
 
                     if mins
                         allResults += "\nMinimums:\n\n"
@@ -340,9 +351,9 @@ module AlexHall
                 shinfo["ShadowTime"] = originalTime
 
                 # Unselect and reselect the grids so that the selection observer shows the scale
-                selection.clear
-                selection.add(grids)
-                ScaleObservers[model].showScale
+#                 selection.clear
+#                 selection.add(grids)
+#                 ScaleObservers[model].showScale
 
                 # Show all grids again (they were hidden to avoid interfering with the calculation)
                 entities.each { |ent| ent.hidden = false if ent.attribute_dictionaries and ent.attribute_dictionaries["SunHours_grid_properties"] }
@@ -587,4 +598,3 @@ module AlexHall
         end
     end
 end
-                

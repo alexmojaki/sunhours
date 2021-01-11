@@ -533,7 +533,7 @@ module AlexHall
                 if model.attribute_dictionary("SunHours", false)
                     # Add a selection observer to show the scale when appropriate
                     scaleObserver = SunHours::ScaleSelectionObserver.new
-                    model.selection.add_observer(scaleObserver)
+#                     model.selection.add_observer(scaleObserver)
                     ScaleObservers[model] = scaleObserver
                 end
             end
