@@ -4,14 +4,14 @@
 
 set -eux
 
-rm *.rbz *.zip
+rm *.rbz *.zip || true
 
 version=`sed -En "s/^version = '([.0-9]+)'$/\1/p" AlexHall_SunHours.rb`
 name=SunHours_v${version}
 zip=${name}.zip
 rbz=${name}.rbz
 
-find . | grep .DS_Store | xargs rm
+find . | grep .DS_Store | xargs rm || true
 
 # This .rb file and folder are the actual plugin files that are ultimately
 # placed in SketchUp's plugins folder and run.
