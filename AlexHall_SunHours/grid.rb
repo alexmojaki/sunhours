@@ -385,17 +385,17 @@ module AlexHall
 
                         # A face is only fitted if all its corner nodes are valid
                         if pts.all?
-                            grid.entities.add_face(pts)
+                            SunHours.make_face_transparent(grid.entities.add_face(pts))
                         end
                         pts = [ nodes[y][x], nodes[y][x+1], nodes[y+1][x+1] ]
 
                         if pts.all?
-                            grid.entities.add_face(pts)
+                            SunHours.make_face_transparent(grid.entities.add_face(pts))
                         end
                     else
                         pts = [ nodes[y][x], nodes[y+1][x], nodes[y+1][x+1], nodes[y][x+1] ]
                         if pts.all?
-                            grid.entities.add_face(pts)
+                            SunHours.make_face_transparent(grid.entities.add_face(pts))
                         end
                     end
                 end
@@ -410,6 +410,14 @@ module AlexHall
             grid.set_attribute("SunHours_grid_properties", "stamp", stamp)
 
             return grid
+        end
+
+        def SunHours.make_face_transparent(face)
+            color = Sketchup::Color.new(255, 255, 255)
+            face.material = color
+            face.material.alpha = 0.5
+            face.back_material = color
+            face.back_material.alpha = 0.5
         end
 
         # Called by fit_grids after 'OK' has been clicked, calls fit_grid_params on each group of faces that need fitting
