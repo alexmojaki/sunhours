@@ -305,6 +305,8 @@ module AlexHall
 
 #                     SunHours.color_grid(grid)
 
+                    add_numbers_to_grid(grid, dict)
+
                     ## Add the results from the 3 grids to the output string for exporting to file
                     allResults += "Point labels:\n\n"
                     pointLabel = 1
