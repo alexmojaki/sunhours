@@ -80,7 +80,7 @@ module AlexHall
                 timeStep = Float(parameters.shift)*3600
                 
                 # Location of CSV file
-                savePath = dialog.get_element_value("save_path")
+                savePath = dialog.get_element_value("save_path") rescue ""
                 
                 if not savePath.empty?
                     

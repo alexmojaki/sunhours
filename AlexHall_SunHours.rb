@@ -3,7 +3,7 @@
 require 'sketchup.rb'
 require 'extensions.rb'
 
-#Sketchup.send_action "showRubyPanel:"
+Sketchup.send_action "showRubyPanel:"
 
 version = '2.0.8'
 
