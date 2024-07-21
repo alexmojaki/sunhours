@@ -47,7 +47,7 @@ module AlexHall
         def SunHours.offset_face(face, dist)
             begin
                     pi = Math::PI
-                    if (not ((dist.class==Fixnum || dist.class==Float || dist.class==Length) && dist!=0))
+                    if (not ((dist.class==1.class || dist.class==1.0.class || dist.class==Length) && dist!=0))
                         return nil
                     end
                     verts=face.outer_loop.vertices
