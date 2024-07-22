@@ -4,7 +4,7 @@
 
 set -eux
 
-rm *.rbz *.zip
+rm *.rbz *.zip || true
 
 version=`sed -En "s/^version = '([.0-9]+)'$/\1/p" AlexHall_SunHours.rb`
 name=SunHours_v${version}
