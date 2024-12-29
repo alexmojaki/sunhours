@@ -118,9 +118,6 @@ module AlexHall
             begin
                 ## Initialisation
 
-                # Group the analysis of all grids into a single operation that can be undone in one go
-                model.start_operation("Analyse grids", true)
-
                 # Hide all grids so that they don't interfere with the calculation (they cast shadows)
                 entities.each { |ent| ent.hidden = true if ent.attribute_dictionaries and ent.attribute_dictionaries["SunHours_grid_properties"] }
 
@@ -347,7 +344,7 @@ module AlexHall
                 # Show all grids again (they were hidden to avoid interfering with the calculation)
                 entities.each { |ent| ent.hidden = false if ent.attribute_dictionaries and ent.attribute_dictionaries["SunHours_grid_properties"] }
 
-                # Complete the "Analyse grids" operation
+                # Complete the "Analyse grids" or "IEQ wizard" operation started by the caller
                 model.commit_operation
             rescue => error
                 model.abort_operation
@@ -450,7 +447,9 @@ module AlexHall
                 # If the button says 'OK' (all analysis inside here)
                 elsif action_name=="submit"
                     dialog.close
+                    model.start_operation("Analyse grids", true)
                     sunlight_analyse_grids_params(parameters_string, grids, dialog)
+                    # The operation is committed inside sunlight_analyse_grids_params
 
                 else # If the user clicked Cancel
                     dialog.close

@@ -414,10 +414,6 @@ module AlexHall
 
         # Called by fit_grids after 'OK' has been clicked, calls fit_grid_params on each group of faces that need fitting
         def SunHours.fit_selection(selection, model, entities, params)
-
-            # All fittings are grouped under a single operation that can be undone by a single click of the user
-            model.start_operation("Fit grid", true)
-
             begin
 
                 # Filter faces
@@ -496,8 +492,6 @@ module AlexHall
                 model.selection.add(grids)
                 
                 get_initialised_model_dict
-
-                model.commit_operation
             rescue
                 model.abort_operation
                 UI.messagebox("Error occurred during grid fitting")
@@ -547,7 +541,9 @@ module AlexHall
                                   Float(parameters.shift)]
                         dialog.close()
                         entities.erase_entities(oldGrids)
+                        model.start_operation("Fit grid", true)
                         SunHours.fit_selection(selection, model, entities, params)
+                        model.commit_operation
                     elsif action_name=="default"
                         model.start_operation("Fit grid default settings", true)
                         model_dict = get_initialised_model_dict()

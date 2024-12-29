@@ -59,6 +59,7 @@ module AlexHall
 
         submenu.add_item("IEQ wizard") {
             model = Sketchup.active_model
+            model.start_operation("IEQ wizard", true)
             SunHours.fit_selection(model.selection, model, model.active_entities, ["Approximate width of cells (m)", 0.5, 0.72.m, true, 3, 1.5])
 
             # Find all grids in the selection
@@ -72,8 +73,10 @@ module AlexHall
 
             if grids.empty?
                 UI.messagebox("Error: No grids were produced")
+                model.abort_operation
             else
                 sunlight_analyse_grids_params(IEQ_default_dates_times, grids, nil)
+                # The operation is committed inside sunlight_analyse_grids_params
             end
         }
 
@@ -83,7 +86,7 @@ module AlexHall
             message = "You have selected a grid for which this function is not available. This is probably because the grid was created in an older version of SunHours. "
             message += fix + "\nMeanwhile, would you like to delete all grids created in the old version?"
             result = UI.messagebox(message, MB_YESNO)
-            if result == 6 # User clicked yes
+            if result == IDYES # User clicked yes
                 toDelete = []
                 entities.each { |e|
                     dict = e.attribute_dictionary("SunHours_grid_properties", false)
@@ -91,7 +94,9 @@ module AlexHall
                         toDelete << e
                     end
                 }
+                model.start_operation("Delete old grids", true)
                 entities.erase_entities(toDelete)
+                model.commit_operation
             end
         end
 
