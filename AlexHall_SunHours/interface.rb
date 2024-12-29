@@ -60,7 +60,8 @@ module AlexHall
         submenu.add_item("IEQ wizard") {
             model = Sketchup.active_model
             model.start_operation("IEQ wizard", true)
-            SunHours.fit_selection(model.selection, model, model.active_entities, ["Approximate width of cells (m)", 0.5, 0.72.m, true, 3, 1.5])
+            fitted = SunHours.fit_selection(model.selection, model, model.active_entities, ["Approximate width of cells (m)", 0.5, 0.72.m, true, 3, 1.5])
+            return if not fitted
 
             # Find all grids in the selection
             grids = []

@@ -412,7 +412,11 @@ module AlexHall
             return grid
         end
 
-        # Called by fit_grids after 'OK' has been clicked, calls fit_grid_params on each group of faces that need fitting
+        # Called by fit_grids after 'OK' has been clicked, calls fit_grid_params on each group of faces that need fitting.
+        # Also called by the IEQ wizard.
+        # The caller has to start and commit an operation, which this function may abort.
+        # Returns false and aborts the operation if there are no selected faces.
+        # Returns true if the fitting was successful.
         def SunHours.fit_selection(selection, model, entities, params)
             begin
 
@@ -422,6 +426,7 @@ module AlexHall
                 if faces.empty?
                     UI.messagebox("No face found in selection.")
                     model.abort_operation
+                    return false
                 end
 
                 # Stored so that they can be selected afterwards
@@ -492,6 +497,7 @@ module AlexHall
                 model.selection.add(grids)
                 
                 get_initialised_model_dict
+                return true
             rescue
                 model.abort_operation
                 UI.messagebox("Error occurred during grid fitting")
