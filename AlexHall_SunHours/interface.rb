@@ -121,7 +121,9 @@ module AlexHall
                             if not sel.collect{ |e| e.attribute_dictionaries["SunHours_grid_properties"]["results"] }.all?
                                 warnOldGrid(Old_analysed_grid_fix)
                             else
+                                Sketchup.active_model.start_operation("Attach results to nodes", true)
                                 add_numbers_to_grid(grid, properties)
+                                Sketchup.active_model.commit_operation
                             end
                         }
                     else
@@ -271,9 +273,9 @@ module AlexHall
             SunHours.color_grid(grid)
             scaleObserver = ScaleObservers[Sketchup.active_model]
             scaleObserver.showScale
+            add_numbers_to_grid(grid, dict) if had_numbers
             Sketchup.active_model.commit_operation
             
-            add_numbers_to_grid(grid, dict) if had_numbers
         end
         
         def SunHours.remove_numbers_from_grid(grid)
@@ -287,7 +289,6 @@ module AlexHall
             text_norm.length = 0.2.m
             text_norm = text_norm.to_a
             results = properties["results"]
-            Sketchup.active_model.start_operation("Attach results to nodes", true)
             for y in 0...nodes.length
                 for x in 0...nodes[0].length
                     node = nodes[y][x]
@@ -298,7 +299,6 @@ module AlexHall
                 end
             end
             properties["append_numbers"] = true
-            Sketchup.active_model.commit_operation
         end
 
         # Making a scale show when a grid is selected

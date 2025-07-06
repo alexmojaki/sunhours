@@ -546,8 +546,8 @@ module AlexHall
                                   (parameters.shift=="t"), Integer(parameters.shift), \
                                   Float(parameters.shift)]
                         dialog.close()
-                        entities.erase_entities(oldGrids)
                         model.start_operation("Fit grid", true)
+                        entities.erase_entities(oldGrids)
                         SunHours.fit_selection(selection, model, entities, params)
                         model.commit_operation
                     elsif action_name=="default"
